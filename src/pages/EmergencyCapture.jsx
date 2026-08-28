@@ -1,279 +1,56 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function EmergencyCapture() {
+const MAX_RECORDING_DURATION = 30; // seconds
+
+export default function EmergencyCapture() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
+  const recorderRef = useRef(null);
   const chunksRef = useRef([]);
-  const transcriptRef = useRef("");
-  const locationRef = useRef(null);
+  const startedRef = useRef(false);
+  const timerRef = useRef(null);
 
-  const [cameraPermission, setCameraPermission] = useState(false);
-  const [micPermission, setMicPermission] = useState(false);
+  const navigate = useNavigate();
 
-  const [recording, setRecording] = useState(false);
-  const [recordedVideo, setRecordedVideo] = useState(null);
-  const [recordedBlob, setRecordedBlob] = useState(null);
-  const [emergencyPackage, setEmergencyPackage] = useState(null);
-  const [recordingTime, setRecordingTime] = useState(0);
+  const [status, setStatus] = useState("Starting emergency system...");
   const [error, setError] = useState("");
+
   const [location, setLocation] = useState(null);
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [isListening, setIsListening] = useState(false);
+  const [locationStatus, setLocationStatus] =
+    useState("Getting your location...");
 
-  const recognitionRef = useRef(null);
-  const shouldContinueListeningRef = useRef(false);
+  const [secondsLeft, setSecondsLeft] = useState(
+    MAX_RECORDING_DURATION
+  );
 
-  // Start camera and microphone
-  useEffect(() => {
-    startCameraAndMicrophone();
-    getLocation();
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingStopped, setRecordingStopped] = useState(false);
 
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => {
-          track.stop();
-        });
-      }
-    };
-  }, []);
-
-  // Recording timer
-  useEffect(() => {
-    let timer;
-
-    if (recording) {
-      timer = setInterval(() => {
-        setRecordingTime((time) => time + 1);
-      }, 1000);
-    }
-
-    return () => clearInterval(timer);
-  }, [recording]);
-
-  // CAMERA + MICROPHONE
-  const startCameraAndMicrophone = async () => {
-    try {
-      setError("");
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-
-      setCameraPermission(true);
-      setMicPermission(true);
-    } catch (err) {
-      console.error(err);
-      setError(
-        "Camera and microphone permission is required."
-      );
-    }
-  };
-
-  // START RECORDING
-  const startRecording = () => {
-    if (!streamRef.current) {
-      setError("Camera and microphone are not ready.");
-      return;
-    }
-
-    chunksRef.current = [];
-
-    // Find a format supported by this browser
-    let mimeType = "";
-
-    if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")) {
-      mimeType = "video/webm;codecs=vp9,opus";
-    } else if (
-      MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-    ) {
-      mimeType = "video/webm;codecs=vp8,opus";
-    } else if (MediaRecorder.isTypeSupported("video/webm")) {
-      mimeType = "video/webm";
-    }
-
-    let recorder;
-
-    try {
-      recorder = mimeType
-        ? new MediaRecorder(streamRef.current, { mimeType })
-        : new MediaRecorder(streamRef.current);
-    } catch (err) {
-      console.error(err);
-      setError("Your browser does not support video recording.");
-      return;
-    }
-
-    mediaRecorderRef.current = recorder;
-
-    recorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) {
-        chunksRef.current.push(event.data);
-      }
-    };
-
-    recorder.onerror = (event) => {
-      console.error("Recording error:", event);
-      setError("Recording failed. Please try again.");
-      setRecording(false);
-    };
-
-    recorder.onstop = () => {
-      if (chunksRef.current.length === 0) {
-        setError("No recording data was captured.");
-        return;
-      }
-
-      const blob = new Blob(chunksRef.current, {
-        type: mimeType || "video/webm",
-      });
-
-      const videoURL = URL.createObjectURL(blob);
-
-      setRecordedVideo(videoURL);
-      setRecordedBlob(blob);
-
-      // =====================================
-      // CREATE EMERGENCY PACKAGE
-      // =====================================
-
-      const emergencyData = {
-        type: "SOS",
-
-        emergencyType: "SOS",
-
-        timestamp: new Date().toISOString(),
-
-        location: locationRef.current
-          ? {
-              latitude: locationRef.current.latitude,
-              longitude: locationRef.current.longitude,
-            }
-          : null,
-
-        transcript: transcriptRef.current.trim(),
-
-        anonymous: true,
-
-        evidence: {
-          type: blob.type,
-          size: blob.size,
-        },
-      };
-
-      setEmergencyPackage(emergencyData);
-
-      console.log("================================");
-      console.log("🚨 EMERGENCY PACKAGE CREATED");
-      console.log("================================");
-
-      console.log(emergencyData);
-      console.log("🎥 Evidence Blob:", blob);
-    };
-
-    // Collect data every 1 second
-    recorder.start(1000);
-
-    setRecording(true);
-    setRecordingTime(0);
-    setError("");
-
-    // Automatically start voice-to-text
-    setTranscript("");
-
-    startVoiceRecognition();
-  };
-
-  // STOP RECORDING
-  const stopRecording = () => {
-    const recorder = mediaRecorderRef.current;
-
-    // Stop voice-to-text
-    stopVoiceRecognition();
-
-    // Stop video/audio recording
-    if (recorder && recorder.state !== "inactive") {
-      recorder.stop();
-    }
-
-    setRecording(false);
-
-    console.log("Recording stopped.");
-  };
-
-  // RECORD AGAIN
-  const recordAgain = () => {
-    if (recordedVideo) {
-      URL.revokeObjectURL(recordedVideo);
-    }
-
-    setRecordedVideo(null);
-    setRecordingTime(0);
-    setError("");
-
-    // Restart camera preview
-    if (streamRef.current && videoRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-    }
-  };
-
-  // TIMER
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-
-    return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(
-      2,
-      "0"
-    )}`;
-  };
+  // ================= LOCATION =================
 
   const getLocation = () => {
     if (!navigator.geolocation) {
-      setError("Location is not supported by this browser.");
+      setLocationStatus("Location is not supported");
       return;
     }
 
-    setLocationLoading(true);
-    setError("");
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-
-        setLocation({
-          latitude,
-          longitude,
-        });
-
-        locationRef.current = {
-          latitude,
-          longitude,
+        const userLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
         };
 
-        setLocationLoading(false);
-
-        console.log("Student location:", {
-          latitude,
-          longitude,
-        });
+        setLocation(userLocation);
+        setLocationStatus("Location captured successfully");
       },
-      (error) => {
-        console.error(error);
+      (locationError) => {
+        console.error("Location error:", locationError);
 
-        setLocationLoading(false);
-
-        setError(
-          "Unable to get your location. Please allow location access."
+        setLocationStatus(
+          "Location unavailable - recording will continue"
         );
       },
       {
@@ -284,350 +61,405 @@ function EmergencyCapture() {
     );
   };
 
-  const startVoiceRecognition = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
+  // ================= STOP RECORDING =================
 
-    if (!SpeechRecognition) {
-      console.log(
-        "Speech recognition is not supported in this browser."
+  const stopRecording = () => {
+    if (
+      recorderRef.current &&
+      recorderRef.current.state !== "inactive"
+    ) {
+      recorderRef.current.stop();
+    }
+
+    clearInterval(timerRef.current);
+    setIsRecording(false);
+  };
+
+  // ================= SAVE EMERGENCY =================
+
+  const saveEmergencyReport = (recordingBlob) => {
+    const reportId =
+      "SOS-" + Math.floor(100000 + Math.random() * 900000);
+
+    const report = {
+      id: reportId,
+
+      type: "SOS Emergency",
+
+      status: "Submitted",
+
+      createdAt: new Date().toISOString(),
+
+      location: location,
+
+      recording: recordingBlob
+        ? {
+            name: "sos-emergency-recording.webm",
+            type: recordingBlob.type,
+            size: recordingBlob.size,
+          }
+        : null,
+    };
+
+    const oldReports = JSON.parse(
+      localStorage.getItem("campusSafeReports") || "[]"
+    );
+
+    localStorage.setItem(
+      "campusSafeReports",
+      JSON.stringify([report, ...oldReports])
+    );
+
+    console.log("Emergency report saved:", report);
+
+    setStatus(
+      `🚨 Emergency sent successfully — Report ID: ${reportId}`
+    );
+
+    setRecordingStopped(true);
+  };
+
+  // ================= START RECORDING =================
+
+  const startRecording = (stream) => {
+    if (!window.MediaRecorder) {
+      setStatus(
+        "Camera is active, but recording is not supported in this browser"
       );
       return;
     }
 
-    const recognition = new SpeechRecognition();
-
-    recognition.lang = "en-US";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      console.log("Voice-to-text started");
-    };
-
-    recognition.onresult = (event) => {
-      let text = "";
-
-      for (
-        let i = event.resultIndex;
-        i < event.results.length;
-        i++
-      ) {
-        text += event.results[i][0].transcript;
-      }
-
-      if (text.trim()) {
-        setTranscript((previous) => {
-          const updated = previous + " " + text;
-
-          transcriptRef.current = updated;
-
-          return updated;
-        });
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.log(
-        "Speech recognition:",
-        event.error
-      );
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-
-      // Chrome may stop recognition automatically.
-      // Restart it while video recording is still active.
-      if (shouldContinueListeningRef.current) {
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (error) {
-            console.log("Recognition restart:", error);
-          }
-        }, 300);
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    shouldContinueListeningRef.current = true;
-
     try {
-      recognition.start();
-    } catch (error) {
-      console.log("Recognition start:", error);
+      chunksRef.current = [];
+
+      const recorder = new MediaRecorder(stream);
+
+      recorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const recordingBlob = new Blob(
+          chunksRef.current,
+          {
+            type: recorder.mimeType || "video/webm",
+          }
+        );
+
+        saveEmergencyReport(recordingBlob);
+
+        // Stop camera and microphone after recording
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => {
+            track.stop();
+          });
+
+          streamRef.current = null;
+        }
+      };
+
+      recorder.start();
+
+      setIsRecording(true);
+
+      setStatus(
+        "🔴 SOS ACTIVE — Camera and microphone are recording"
+      );
+
+      // ================= TIMER =================
+
+      let remaining = MAX_RECORDING_DURATION;
+
+      setSecondsLeft(remaining);
+
+      timerRef.current = setInterval(() => {
+        remaining -= 1;
+
+        setSecondsLeft(remaining);
+
+        if (remaining <= 0) {
+          clearInterval(timerRef.current);
+
+          stopRecording();
+        }
+      }, 1000);
+    } catch (recordError) {
+      console.error("Recording error:", recordError);
+
+      setError(
+        `${recordError.name}: ${recordError.message}`
+      );
     }
   };
 
-  const stopVoiceRecognition = () => {
-    shouldContinueListeningRef.current = false;
+  // ================= START CAMERA =================
 
-    if (recognitionRef.current) {
+  useEffect(() => {
+    if (startedRef.current) return;
+
+    startedRef.current = true;
+
+    async function startEmergencySystem() {
       try {
-        recognitionRef.current.stop();
-      } catch (error) {
-        console.log("Recognition stop:", error);
+        setStatus(
+          "Requesting camera and microphone access..."
+        );
+
+        // Start location request
+        getLocation();
+
+        const stream =
+          await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user",
+            },
+            audio: true,
+          });
+
+        streamRef.current = stream;
+
+        // Show live camera preview
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+
+          try {
+            await videoRef.current.play();
+          } catch (playError) {
+            console.log(
+              "Video play warning:",
+              playError
+            );
+          }
+        }
+
+        // Start recording automatically
+        startRecording(stream);
+      } catch (err) {
+        console.error("Camera error:", err);
+
+        setError(`${err.name}: ${err.message}`);
+
+        setStatus(
+          "Camera or microphone could not start"
+        );
       }
     }
 
-    setIsListening(false);
+    startEmergencySystem();
+
+    return () => {
+      clearInterval(timerRef.current);
+    };
+  }, []);
+
+  // ================= STOP EVERYTHING =================
+
+  const stopEverything = () => {
+    clearInterval(timerRef.current);
+
+    if (
+      recorderRef.current &&
+      recorderRef.current.state !== "inactive"
+    ) {
+      recorderRef.current.stop();
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      streamRef.current = null;
+    }
+  };
+
+  const goHome = () => {
+    stopEverything();
+
+    navigate("/");
   };
 
   return (
-    <div className="emergency-capture">
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#020617",
+        color: "white",
+        padding: "30px",
+        textAlign: "center",
+      }}
+    >
+      <h1>🚨 SOS EMERGENCY ACTIVE</h1>
 
-      {/* HEADER */}
-      <div className="capture-header">
+      <p
+        style={{
+          color: isRecording ? "#ef4444" : "#94a3b8",
+          fontWeight: "bold",
+        }}
+      >
+        {status}
+      </p>
 
-        <div className="emergency-badge">
-          🚨 EMERGENCY MODE
-        </div>
+      {/* TIMER */}
 
-        <h1>Emergency Evidence</h1>
-
-        <p>
-          Your camera and microphone can capture evidence
-          to help campus responders understand the situation.
-        </p>
-
-      </div>
-
-      {/* PERMISSIONS */}
-      <div className="permission-status">
-
+      {!recordingStopped && (
         <div
-          className={
-            cameraPermission
-              ? "permission active"
-              : "permission"
-          }
+          style={{
+            fontSize: "24px",
+            fontWeight: "bold",
+            margin: "20px",
+          }}
         >
-          📷 Camera
-          <span>
-            {cameraPermission ? "✓ Ready" : "Waiting"}
-          </span>
-        </div>
-
-        <div
-          className={
-            micPermission
-              ? "permission active"
-              : "permission"
-          }
-        >
-          🎤 Microphone
-          <span>
-            {micPermission ? "✓ Ready" : "Waiting"}
-          </span>
-        </div>
-
-      </div>
-
-      {/* ERROR */}
-      {error && (
-        <div className="capture-error">
-          ⚠️ {error}
-
-          <button onClick={startCameraAndMicrophone}>
-            Allow Camera & Microphone
-          </button>
+          ⏱ Recording time remaining: {secondsLeft}s
         </div>
       )}
 
       {/* LIVE CAMERA */}
-      {!recordedVideo && (
-        <div className="video-container">
 
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-          />
-
-          {recording && (
-            <div className="recording-indicator">
-              <span className="recording-dot"></span>
-
-              RECORDING
-
-              <strong>
-                {formatTime(recordingTime)}
-              </strong>
-            </div>
-          )}
-
-        </div>
-      )}
-
-      {/* RECORDED VIDEO */}
-      {recordedVideo && (
-        <div className="recorded-section">
-
-          <h2>🎥 Evidence Preview</h2>
-
-          <video
-            key={recordedVideo}
-            src={recordedVideo}
-            controls
-            playsInline
-            preload="auto"
-            className="recorded-video"
-          />
-
-          {transcript.trim() && (
-            <div className="transcript-preview">
-
-              <h3>📝 Emergency Description</h3>
-
-              <p>{transcript.trim()}</p>
-
-            </div>
-          )}
-
-          <div className="record-controls">
-
-            <button
-              className="record-again"
-              onClick={recordAgain}
-            >
-              🔄 Record Again
-            </button>
-
-            {/* SEND EVIDENCE */}
-            <button
-              className="send-evidence"
-              onClick={() => {
-                if (!recordedBlob) {
-                  alert("No evidence recorded.");
-                  return;
-                }
-
-                console.log("Sending evidence to backend...");
-                console.log(recordedBlob);
-
-                alert(
-                  "Evidence ready to be sent to the emergency response system."
-                );
-              }}
-            >
-              🚨 SEND EVIDENCE
-            </button>
-
-          </div>
-
-        </div>
-      )}
-
-      {emergencyPackage && (
-        <div className="emergency-package">
-
-          <h2>📦 Emergency Report Ready</h2>
-
-          <div className="package-item">
-            🚨 <strong>Type:</strong>{" "}
-            {emergencyPackage.emergencyType}
-          </div>
-
-          <div className="package-item">
-            📍 <strong>Location:</strong>{" "}
-            {emergencyPackage.location
-              ? `${emergencyPackage.location.latitude.toFixed(
-                  5
-                )}, ${emergencyPackage.location.longitude.toFixed(5)}`
-              : "Unavailable"}
-          </div>
-
-          <div className="package-item">
-            📝 <strong>Description:</strong>{" "}
-            {emergencyPackage.transcript || "No transcript"}
-          </div>
-
-          <div className="package-item">
-            🕶️ <strong>Anonymous:</strong>{" "}
-            {emergencyPackage.anonymous ? "Yes" : "No"}
-          </div>
-
-          <div className="package-item">
-            🎥 <strong>Evidence:</strong>{" "}
-            {emergencyPackage.evidence.size > 0
-              ? "Ready"
-              : "Not available"}
-          </div>
-
-          <div className="package-item">
-            ⏰ <strong>Time:</strong>{" "}
-            {new Date(
-              emergencyPackage.timestamp
-            ).toLocaleString()}
-          </div>
-
-        </div>
-      )}
-
-      {/* RECORD BUTTON */}
-      {!recordedVideo && (
-        <div className="record-controls">
-
-          {!recording ? (
-            <button
-              className="start-recording"
-              onClick={startRecording}
-              disabled={
-                !cameraPermission ||
-                !micPermission
-              }
-            >
-              🔴 START RECORDING
-            </button>
-          ) : (
-            <button
-              className="stop-recording"
-              onClick={stopRecording}
-            >
-              ⏹ STOP RECORDING
-            </button>
-          )}
-
-        </div>
-      )}
-
-      {/* INFORMATION */}
-      <div className="capture-info">
-
-        <div>
-          📍
-          <span>
-            {locationLoading
-              ? "Getting location..."
-              : location
-              ? `Location ready: ${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`
-              : "Location unavailable"}
-          </span>
-        </div>
-
-        <div>
-          🎥
-          <span>
-            Video + audio evidence
-          </span>
-        </div>
-
-        <div>
-          🤖
-          <span>
-            AI analysis will process the report
-          </span>
-        </div>
-
+      <div
+        style={{
+          maxWidth: "700px",
+          margin: "30px auto",
+          background: "black",
+          borderRadius: "15px",
+          overflow: "hidden",
+          minHeight: "400px",
+          border: isRecording
+            ? "3px solid #ef4444"
+            : "3px solid #334155",
+        }}
+      >
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{
+            width: "100%",
+            minHeight: "400px",
+            objectFit: "cover",
+            display: "block",
+          }}
+        />
       </div>
 
+      {/* SYSTEM STATUS */}
+
+      <div
+        style={{
+          maxWidth: "700px",
+          margin: "20px auto",
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "15px",
+        }}
+      >
+        <div
+          style={{
+            background: "#1e293b",
+            padding: "18px",
+            borderRadius: "12px",
+          }}
+        >
+          <div style={{ fontSize: "28px" }}>
+            📹
+          </div>
+
+          <strong>Camera</strong>
+
+          <p>
+            {recordingStopped
+              ? "Stopped"
+              : "Live and recording"}
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: "#1e293b",
+            padding: "18px",
+            borderRadius: "12px",
+          }}
+        >
+          <div style={{ fontSize: "28px" }}>
+            🎤
+          </div>
+
+          <strong>Microphone</strong>
+
+          <p>
+            {recordingStopped
+              ? "Stopped"
+              : "Recording audio"}
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: "#1e293b",
+            padding: "18px",
+            borderRadius: "12px",
+          }}
+        >
+          <div style={{ fontSize: "28px" }}>
+            📍
+          </div>
+
+          <strong>Location</strong>
+
+          <p>{locationStatus}</p>
+
+          {location && (
+            <small>
+              {location.latitude.toFixed(5)},
+              {" "}
+              {location.longitude.toFixed(5)}
+            </small>
+          )}
+        </div>
+      </div>
+
+      {/* ERROR */}
+
+      {error && (
+        <div
+          style={{
+            maxWidth: "700px",
+            margin: "20px auto",
+            padding: "20px",
+            background: "#7f1d1d",
+            borderRadius: "10px",
+          }}
+        >
+          <h3>Error</h3>
+
+          <p>{error}</p>
+        </div>
+      )}
+
+      {/* STOP BUTTON */}
+
+      <button
+        onClick={goHome}
+        style={{
+          marginTop: "30px",
+          padding: "15px 30px",
+          fontSize: "16px",
+          cursor: "pointer",
+          borderRadius: "10px",
+          border: "none",
+          background: "#ef4444",
+          color: "white",
+          fontWeight: "bold",
+        }}
+      >
+        Stop Emergency & Return Home
+      </button>
     </div>
   );
 }
-
-export default EmergencyCapture;

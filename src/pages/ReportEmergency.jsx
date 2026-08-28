@@ -154,32 +154,52 @@ function ReportEmergency() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (!description || !category || !severity) {
-      alert("Please complete the incident details.");
+    if (!description.trim()) {
+      alert("Please describe the incident.");
       return;
     }
+
+    const analysis = analyzeIncident(description);
+
+    const finalCategory = category || analysis.category;
+    const finalSeverity = severity || analysis.severity;
+
     const newReportId =
-  "CS-" + Math.floor(100000 + Math.random() * 900000);
+      "CS-" + Math.floor(100000 + Math.random() * 900000);
 
-setReportId(newReportId);
-
-    setSubmitted(true);
-
-    console.log("Emergency Report:", {
+    const reportData = {
+      id: newReportId,
       description,
-      category,
-      severity,
+      category: finalCategory,
+      severity: finalSeverity,
       anonymous,
       location,
-
       evidenceFiles: evidenceFiles.map((file) => ({
         name: file.name,
         type: file.type,
         size: file.size,
       })),
-
+      aiAnalysis: analysis,
+      status: "Submitted",
       createdAt: new Date().toISOString(),
-    });
+    };
+
+    const existingReports = JSON.parse(
+      localStorage.getItem("campusSafeReports") || "[]"
+    );
+
+    localStorage.setItem(
+      "campusSafeReports",
+      JSON.stringify([reportData, ...existingReports])
+    );
+
+    setReportId(newReportId);
+    setCategory(finalCategory);
+    setSeverity(finalSeverity);
+    setAiResult(analysis);
+    setSubmitted(true);
+
+    console.log("Emergency Report Saved:", reportData);
   };
 
   if (submitted) {
@@ -323,7 +343,11 @@ setReportId(newReportId);
                 setDescription(text);
 
                 if (text.trim().length >= 10) {
-                  setAiResult(analyzeIncident(text));
+                  const result = analyzeIncident(text);
+
+                  setAiResult(result);
+                  setCategory(result.category);
+                  setSeverity(result.severity);
                 } else {
                   setAiResult(null);
                 }

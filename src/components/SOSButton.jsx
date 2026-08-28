@@ -3,11 +3,19 @@ import { useNavigate } from "react-router-dom";
 function SOSButton() {
   const navigate = useNavigate();
 
+  const triggerSOS = () => {
+    navigate("/emergency", {
+      state: {
+        autoStart: true,
+      },
+    });
+  };
+
   return (
     <div className="sos-container">
       <button
         className="sos-button"
-        onClick={() => navigate("/emergency")}
+        onClick={triggerSOS}
       >
         SOS
       </button>
