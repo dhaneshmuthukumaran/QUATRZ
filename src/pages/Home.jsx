@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   AlertTriangle,
   ChevronRight,
-  FileText,
   Map,
   Shield,
   Siren,
@@ -278,7 +277,7 @@ function Home() {
           </div>
 
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="home-quick-actions">
 
 
             {/* ==================================================
@@ -286,37 +285,22 @@ function Home() {
             ================================================== */}
 
             <button
+              className="quick-action report-action"
               onClick={() => navigate("/report")}
-              className="group rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
             >
 
-              <div className="flex items-center justify-between">
+              <span className="quick-icon">+</span>
 
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600">
+              <div>
 
-                  <AlertTriangle size={24} />
+                <strong>Report an Incident</strong>
 
-                </div>
-
-                <ChevronRight
-                  size={20}
-                  className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-red-500"
-                />
+                <p>Report a non-life-threatening situation</p>
 
               </div>
 
+              <span className="quick-arrow">→</span>
 
-              <h3 className="mt-5 text-lg font-black text-slate-900">
-                Report Emergency
-              </h3>
-
-
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-
-                Report an emergency or safety incident with location
-                and supporting evidence.
-
-              </p>
 
             </button>
 
@@ -326,40 +310,28 @@ function Home() {
             ================================================== */}
 
             <button
-              onClick={() => navigate("/reports")}
-              className="group rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              className="quick-action reports-action"
+              onClick={() => navigate("/my-reports")}
             >
 
-              <div className="flex items-center justify-between">
+              <span className="quick-icon">▤</span>
 
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+              <div>
 
-                  <FileText size={24} />
+                <strong>My Reports</strong>
 
-                </div>
-
-
-                <ChevronRight
-                  size={20}
-                  className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-blue-500"
-                />
+                <p>Track your submitted emergency reports</p>
 
               </div>
 
+              <span className="quick-arrow">→</span>
 
-              <h3 className="mt-5 text-lg font-black text-slate-900">
-                My Reports
-              </h3>
-
-
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-
-                Track submitted incidents and monitor their response
-                status.
-
-              </p>
 
             </button>
+
+          </div>
+
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
 
 
             {/* ==================================================

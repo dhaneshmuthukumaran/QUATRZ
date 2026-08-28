@@ -39,6 +39,69 @@ button {
   cursor: pointer;
 }
 
+.home-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.quick-action {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border: 1px solid #dce7e0;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: left;
+  transition: 0.2s ease;
+  cursor: pointer;
+}
+
+.quick-action:hover {
+  border-color: #82b59a;
+  box-shadow: 0 12px 25px rgba(27, 58, 44, 0.08);
+  transform: translateY(-2px);
+}
+
+.quick-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #2f7957;
+  background: #e4f2e9;
+  font-size: 22px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.quick-action strong {
+  display: block;
+  color: #20382b;
+  font-size: 15px;
+}
+
+.quick-action p {
+  margin: 5px 0 0;
+  color: #74827a;
+  font-size: 12px;
+}
+
+.quick-arrow {
+  margin-left: auto;
+  color: #3d8763;
+  font-size: 22px;
+}
+
+@media (max-width: 700px) {
+  .home-quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 ::selection {
   background: #b9ff63;
   color: #07100d;

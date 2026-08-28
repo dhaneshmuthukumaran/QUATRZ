@@ -15,6 +15,7 @@ import {
 
 import { useState } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
+
 import Home from "./pages/Home";
 import MyReports from "./pages/MyReports";
 import Preparedness from "./pages/Preparedness";
@@ -23,15 +24,21 @@ import SafetyMap from "./pages/SafetyMap";
 import Emergency from "./pages/Emergency";
 import EmergencyCapture from "./pages/EmergencyCapture";
 
+/* ================= NAVBAR ================= */
+
 function Navbar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <nav className="navbar">
       <div className="nav-container">
-
-        {/* LOGO */}
-        <a href="#home" className="logo">
+        <button
+          className="logo"
+          onClick={() => navigate("/")}
+          type="button"
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}
+        >
           <div className="logo-icon">
             <Siren size={19} />
           </div>
@@ -40,9 +47,8 @@ function Navbar() {
             <span className="logo-name">Campus</span>
             <span className="logo-highlight">ResQ</span>
           </div>
-        </a>
+        </button>
 
-        {/* DESKTOP NAV */}
         <div className="nav-links">
           <a href="#features">Features</a>
           <a href="#workflow">How it works</a>
@@ -50,26 +56,33 @@ function Navbar() {
         </div>
 
         <div className="nav-actions">
-          <button className="login-btn">
+          <button
+            className="login-btn"
+            type="button"
+            onClick={() => navigate("/home")}
+          >
             Admin Login
           </button>
 
-              <a href="/report" className="nav-report-btn">
+          <button
+            className="nav-report-btn"
+            type="button"
+            onClick={() => navigate("/report")}
+          >
             Report Emergency
             <ArrowRight size={15} />
-          </a>
+          </button>
         </div>
 
-        {/* MOBILE BUTTON */}
         <button
           className="mobile-menu"
           onClick={() => setOpen(!open)}
+          type="button"
         >
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
-      {/* MOBILE NAV */}
       {open && (
         <div className="mobile-nav">
           <a href="#features" onClick={() => setOpen(false)}>
@@ -84,36 +97,44 @@ function Navbar() {
             Safety
           </a>
 
-            <a href="/report" className="mobile-report">
+          <button
+            className="mobile-report"
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              navigate("/report");
+            }}
+          >
             Report Emergency
-          </a>
+          </button>
         </div>
       )}
     </nav>
   );
 }
 
+/* ================= HERO ================= */
 
 function Hero() {
+  const navigate = useNavigate();
+
   const handleSOS = () => {
     const confirmSOS = window.confirm(
-      "🚨 Are you sure you want to activate emergency mode?"
+      "🚨 Are you sure you want to activate emergency mode?\n\nCamera, microphone and location will be requested."
     );
 
     if (confirmSOS) {
-      window.location.href = "/emergency-capture";
+      navigate("/emergency-capture");
     }
   };
 
   return (
     <section id="home" className="hero">
-
       <div className="hero-grid"></div>
 
       <div className="hero-container">
-
+        {/* LEFT CONTENT */}
         <div className="hero-content">
-
           <div className="status-pill">
             <span className="status-dot"></span>
             Smart Campus Safety System
@@ -122,39 +143,38 @@ function Hero() {
           <h1>
             Safer campus.
             <br />
-
-            <span>
-              Faster response.
-            </span>
+            <span>Faster response.</span>
           </h1>
 
           <p>
-            A smart emergency response platform that connects
-            students, AI-powered incident intelligence, security
-            teams, and campus responders in one system.
+            A smart emergency response platform that connects students,
+            AI-powered incident intelligence, security teams, and campus
+            responders in one system.
           </p>
 
           <div className="hero-buttons">
-
-            <a href="/report" className="primary-btn">
-                Report an Emergency
+            <button
+              className="primary-btn"
+              onClick={() => navigate("/report")}
+              type="button"
+            >
+              Report an Emergency
               <ArrowRight size={17} />
-            </a>
+            </button>
 
             <a href="#workflow" className="secondary-btn">
               See how it works
               <ChevronRight size={17} />
             </a>
-
           </div>
 
           <div className="hero-note">
             <CheckCircle2 size={15} />
             Anonymous reporting available
           </div>
-
         </div>
 
+        {/* SOS BUTTON */}
         <div className="sos-wrapper">
           <button
             className="sos-button"
@@ -171,11 +191,9 @@ function Hero() {
           </div>
         </div>
 
-        {/* HERO VISUAL */}
+        {/* RIGHT DASHBOARD */}
         <div className="hero-visual">
-
           <div className="dashboard-preview">
-
             <div className="preview-top">
               <div>
                 <span>LIVE OPERATIONS</span>
@@ -189,7 +207,6 @@ function Hero() {
             </div>
 
             <div className="preview-map">
-
               <div className="map-grid"></div>
 
               <div className="building building-one">
@@ -217,11 +234,9 @@ function Hero() {
               </div>
 
               <div className="route-line"></div>
-
             </div>
 
             <div className="preview-bottom">
-
               <div>
                 <span>OPEN INCIDENTS</span>
                 <strong>03</strong>
@@ -236,18 +251,13 @@ function Hero() {
                 <span>AVG RESPONSE</span>
                 <strong>02:18</strong>
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
 
       {/* TRUST STRIP */}
       <div className="hero-trust">
-
         <span>BUILT FOR CAMPUS SAFETY</span>
 
         <div className="trust-items">
@@ -266,13 +276,12 @@ function Hero() {
             Emergency response
           </span>
         </div>
-
       </div>
-
     </section>
   );
 }
 
+/* ================= FEATURES ================= */
 
 function Features() {
   const features = [
@@ -283,7 +292,6 @@ function Features() {
       description:
         "Students can quickly report an emergency with location, category, identity preference, and photo or video evidence.",
     },
-
     {
       icon: Sparkles,
       number: "02",
@@ -291,7 +299,6 @@ function Features() {
       description:
         "The system analyzes the incident description, identifies the category, estimates severity, and helps prioritize the response.",
     },
-
     {
       icon: MapPin,
       number: "03",
@@ -299,7 +306,6 @@ function Features() {
       description:
         "Security teams can see incident locations, risk zones, responders, and suggested response routes.",
     },
-
     {
       icon: Users,
       number: "04",
@@ -307,7 +313,6 @@ function Features() {
       description:
         "Nearby students can confirm or deny reported incidents, helping authorities reduce false reports.",
     },
-
     {
       icon: Clock3,
       number: "05",
@@ -315,7 +320,6 @@ function Features() {
       description:
         "If an emergency is not acknowledged within the defined time, the system automatically escalates it.",
     },
-
     {
       icon: Shield,
       number: "06",
@@ -327,15 +331,10 @@ function Features() {
 
   return (
     <section id="features" className="features-section">
-
       <div className="section-container">
-
         <div className="section-heading">
-
           <div>
-            <span className="eyebrow">
-              CORE CAPABILITIES
-            </span>
+            <span className="eyebrow">CORE CAPABILITIES</span>
 
             <h2>
               Everything needed
@@ -345,21 +344,17 @@ function Features() {
           </div>
 
           <p>
-            CampusResQ brings reporting, intelligence,
-            location awareness and emergency coordination
-            into one connected safety platform.
+            CampusResQ brings reporting, intelligence, location awareness
+            and emergency coordination into one connected safety platform.
           </p>
-
         </div>
 
         <div className="features-grid">
-
           {features.map((feature) => {
             const Icon = feature.icon;
 
             return (
               <div className="feature-card" key={feature.number}>
-
                 <div className="feature-top">
                   <span>{feature.number}</span>
 
@@ -369,48 +364,50 @@ function Features() {
                 </div>
 
                 <h3>{feature.title}</h3>
-
                 <p>{feature.description}</p>
 
                 <div className="feature-arrow">
                   <ArrowRight size={16} />
                 </div>
-
               </div>
             );
           })}
-
         </div>
-
       </div>
-
     </section>
   );
 }
 
+/* ================= WORKFLOW ================= */
+
+function WorkflowStep({ number, title, text }) {
+  return (
+    <div className="workflow-step">
+      <div className="workflow-number">{number}</div>
+
+      <div>
+        <h3>{title}</h3>
+        <p>{text}</p>
+      </div>
+    </div>
+  );
+}
 
 function HowItWorks() {
   return (
     <section id="workflow" className="workflow-section">
-
       <div className="section-container">
-
         <div className="workflow-heading">
-
-          <span className="eyebrow">
-            RESPONSE WORKFLOW
-          </span>
+          <span className="eyebrow">RESPONSE WORKFLOW</span>
 
           <h2>
             From first signal
             <br />
             <span>to final resolution.</span>
           </h2>
-
         </div>
 
         <div className="workflow">
-
           <div className="workflow-line"></div>
 
           <WorkflowStep
@@ -442,47 +439,38 @@ function HowItWorks() {
             title="Incident resolved"
             text="The incident is closed and response information becomes part of campus safety analytics."
           />
-
         </div>
-
       </div>
-
     </section>
   );
 }
 
+/* ================= SAFETY ================= */
 
-function WorkflowStep({ number, title, text }) {
+function SafetyItem({ title, text }) {
   return (
-    <div className="workflow-step">
-
-      <div className="workflow-number">
-        {number}
+    <div className="safety-item">
+      <div className="safety-check">
+        <CheckCircle2 size={17} />
       </div>
 
       <div>
-        <h3>{title}</h3>
+        <h4>{title}</h4>
         <p>{text}</p>
       </div>
-
     </div>
   );
 }
 
-
 function SafetySection() {
+  const navigate = useNavigate();
+
   return (
     <section id="safety" className="safety-section">
-
       <div className="section-container">
-
         <div className="safety-box">
-
           <div className="safety-content">
-
-            <span className="eyebrow">
-              SAFETY FIRST
-            </span>
+            <span className="eyebrow">SAFETY FIRST</span>
 
             <h2>
               Prepared before
@@ -491,25 +479,24 @@ function SafetySection() {
             </h2>
 
             <p>
-              Keep important safety information accessible
-              across the campus. Students and staff can quickly
-              find emergency contacts, evacuation instructions,
-              assembly points and campus procedures.
+              Keep important safety information accessible across the campus.
+              Students and staff can quickly find emergency contacts,
+              evacuation instructions, assembly points and campus procedures.
             </p>
 
             <div className="safety-buttons">
-
-              <a href="/report" className="primary-btn">
-                  Emergency information
+              <button
+                className="primary-btn"
+                onClick={() => navigate("/preparedness")}
+                type="button"
+              >
+                Emergency information
                 <ArrowRight size={16} />
-              </a>
-
+              </button>
             </div>
-
           </div>
 
           <div className="safety-list">
-
             <SafetyItem
               title="Emergency contacts"
               text="Quick access to campus security and emergency services."
@@ -529,50 +516,24 @@ function SafetySection() {
               title="Campus procedures"
               text="Access important safety guidelines anytime."
             />
-
           </div>
-
         </div>
-
       </div>
-
     </section>
   );
 }
 
-
-function SafetyItem({ title, text }) {
-  return (
-    <div className="safety-item">
-
-      <div className="safety-check">
-        <CheckCircle2 size={17} />
-      </div>
-
-      <div>
-        <h4>{title}</h4>
-        <p>{text}</p>
-      </div>
-
-    </div>
-  );
-}
-
+/* ================= REPORT ================= */
 
 function ReportSection() {
   const navigate = useNavigate();
 
   return (
     <section id="report" className="report-section">
-
       <div className="section-container">
-
         <div className="report-box">
-
           <div>
-            <span className="eyebrow">
-              EMERGENCY RESPONSE
-            </span>
+            <span className="eyebrow">EMERGENCY RESPONSE</span>
 
             <h2>
               See something?
@@ -581,33 +542,32 @@ function ReportSection() {
             </h2>
 
             <p>
-              Your report can help security teams respond
-              faster and keep the campus safe.
+              Your report can help security teams respond faster and keep
+              the campus safe.
             </p>
           </div>
 
-          <button className="report-action-button" onClick={() => navigate("/report")}>
+          <button
+            className="report-action-button"
+            onClick={() => navigate("/report")}
+            type="button"
+          >
             <Siren size={21} />
             Report Emergency
           </button>
-
         </div>
-
       </div>
-
     </section>
   );
 }
 
+/* ================= FOOTER ================= */
 
 function Footer() {
   return (
     <footer className="footer">
-
       <div className="section-container">
-
         <div className="footer-main">
-
           <div className="logo">
             <div className="logo-icon">
               <Siren size={18} />
@@ -621,68 +581,83 @@ function Footer() {
 
           <p>
             Smart Campus Emergency Response
+            <br />
             & Safety Management System
           </p>
-
         </div>
 
         <div className="footer-bottom">
-
-          <span>
-            © 2026 CampusResQ
-          </span>
-
-          <span>
-            Built for safer campuses.
-          </span>
-
+          <span>© 2026 CampusResQ</span>
+          <span>Built for safer campuses.</span>
         </div>
-
       </div>
-
     </footer>
   );
 }
 
+/* ================= LANDING PAGE ================= */
 
 function LandingPage() {
   return (
     <div>
-
       <Navbar />
-
       <Hero />
-
       <Features />
-
       <HowItWorks />
-
       <SafetySection />
-
       <ReportSection />
-
       <Footer />
-
     </div>
   );
 }
 
+/* ================= APP ROUTES ================= */
+
 export default function App() {
   return (
     <Routes>
+      {/* MAIN LANDING PAGE */}
       <Route path="/" element={<LandingPage />} />
+
+      {/* HOME */}
       <Route path="/home" element={<Home />} />
+
+      {/* LANDING PAGE */}
+      <Route path="/landing" element={<LandingPage />} />
+
+      {/* EMERGENCY REPORT */}
       <Route path="/report" element={<ReportEmergency />} />
+
+      {/* REPORTS */}
       <Route path="/reports" element={<MyReports />} />
+      <Route path="/my-report" element={<MyReports />} />
+      <Route path="/my-reports" element={<MyReports />} />
+
+      {/* SAFETY MAP */}
       <Route path="/map" element={<SafetyMap />} />
+
+      {/* PREPAREDNESS */}
       <Route path="/preparedness" element={<Preparedness />} />
-      <Route path="/emergency" element={<Emergency />} />
+
+      {/* SOS AUTOMATIC RECORDING */}
       <Route
         path="/emergency-capture"
         element={<EmergencyCapture />}
       />
-      <Route path="/my-report" element={<MyReports />} />
-      <Route path="/my-reports" element={<MyReports />} />
+
+      <Route
+        path="/emergency"
+        element={<EmergencyCapture />}
+      />
+
+      {/* EMERGENCY ASSISTANCE */}
+      <Route
+        path="/emergency-assistance"
+        element={<Emergency />}
+      />
+
+      {/* FALLBACK */}
+      <Route path="*" element={<LandingPage />} />
     </Routes>
   );
 }
