@@ -1,0 +1,72 @@
+{
+  "fire": {
+    "base_severity": "high",
+    "keywords": [
+      "fire",
+      "flame",
+      "smoke",
+      "burning",
+      "explosion",
+      "கண்ட தீ",
+      "தீ",
+      "புகை"
+    ]
+  },
+  "medical": {
+    "base_severity": "high",
+    "keywords": [
+      "injury",
+      "injured",
+      "unconscious",
+      "bleeding",
+      "accident",
+      "ambulance",
+      "medical",
+      "hospital",
+      "மருத்துவம்",
+      "காயம்",
+      "விபத்து"
+    ]
+  },
+  "assault": {
+    "base_severity": "high",
+    "keywords": [
+      "attack",
+      "assault",
+      "fight",
+      "beating",
+      "weapon",
+      "knife",
+      "threat",
+      "தாக்குதல்",
+      "சண்டை",
+      "ஆயுதம்"
+    ]
+  },
+  "security": {
+    "base_severity": "medium",
+    "keywords": [
+      "intruder",
+      "thief",
+      "theft",
+      "robbery",
+      "suspicious",
+      "break in",
+      "திருடன்",
+      "திருட்டு",
+      "சந்தேகமான"
+    ]
+  },
+  "other": {
+    "base_severity": "low",
+    "keywords": [
+      "help",
+      "emergency",
+      "problem",
+      "danger",
+      "உதவி",
+      "அவசரம்",
+      "ஆபத்து"
+    ]
+  }
+}
