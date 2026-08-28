@@ -17,7 +17,7 @@ const createEmergencyReport = async (req, res) => {
       longitude: longitude || null,
       description: description || "",
 
-      status: "pending",
+      status: "NEW",
       severity: "",
       priority: "",
 

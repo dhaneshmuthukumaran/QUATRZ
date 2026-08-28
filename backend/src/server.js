@@ -2,6 +2,13 @@ const express = require("express");
 const cors = require("cors");
 const { db } = require("./config/firebase");
 const emergencyRoutes = require("./routes/emergencyRoutes");
+const userRoutes = require("./routes/userRoutes");  
+const safetyReportRoutes = require("./routes/safetyReportRoutes");
+const responderRoutes = require("./routes/responderRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const emergencyAIRoutes = require("./routes/emergencyAIRoutes");
+const { verifyToken } = require("./middleware/authMiddleware"); 
+
 
 const app = express();
 
@@ -9,11 +16,20 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/emergency", emergencyRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/safety-reports", safetyReportRoutes);
+app.use("/api/responders", responderRoutes);
 
-app.get("/", (req, res) => {
+app.use("/api/admin", adminRoutes);
+
+app.use("/api/emergency", emergencyAIRoutes);
+
+
+app.get("/api/protected", verifyToken, (req, res) => {
   res.json({
     success: true,
-    message: "CampusSafe Backend is running"
+    message: "Authentication successful",
+    user: req.user
   });
 });
 
