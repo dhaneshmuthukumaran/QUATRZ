@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { createEmergencyReport } from "../services/emergencyService";
 
 function ReportEmergency() {
     const analyzeIncident = (text) => {
@@ -109,6 +110,8 @@ function ReportEmergency() {
   const [reportId, setReportId] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [evidenceFiles, setEvidenceFiles] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
 
   const categories = [
     "Medical Emergency",
@@ -154,10 +157,15 @@ function ReportEmergency() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
+    if (submitting) return;
+
     if (!description.trim()) {
       alert("Please describe the incident.");
       return;
     }
+
+    setSubmitting(true);
+    setSubmissionError("");
 
     const analysis = analyzeIncident(description);
 
@@ -184,22 +192,40 @@ function ReportEmergency() {
       createdAt: new Date().toISOString(),
     };
 
-    const existingReports = JSON.parse(
-      localStorage.getItem("campusSafeReports") || "[]"
-    );
+    createEmergencyReport({
+      userId: anonymous ? "" : "",
+      type: finalCategory,
+      latitude: location?.latitude ?? null,
+      longitude: location?.longitude ?? null,
+      description,
+    })
+      .then(() => {
+        const existingReports = JSON.parse(
+          localStorage.getItem("campusSafeReports") || "[]"
+        );
 
-    localStorage.setItem(
-      "campusSafeReports",
-      JSON.stringify([reportData, ...existingReports])
-    );
+        localStorage.setItem(
+          "campusSafeReports",
+          JSON.stringify([reportData, ...existingReports])
+        );
 
-    setReportId(newReportId);
-    setCategory(finalCategory);
-    setSeverity(finalSeverity);
-    setAiResult(analysis);
-    setSubmitted(true);
+        setReportId(newReportId);
+        setCategory(finalCategory);
+        setSeverity(finalSeverity);
+        setAiResult(analysis);
+        setSubmitted(true);
+        setSubmitting(false);
 
-    console.log("Emergency Report Saved:", reportData);
+        alert("Emergency report submitted successfully.");
+        console.log("Emergency Report Saved:", reportData);
+      })
+      .catch((error) => {
+        console.error("Emergency report submission failed:", error);
+        setSubmissionError(
+          "Unable to submit the emergency report. Please try again."
+        );
+        setSubmitting(false);
+      });
   };
 
   if (submitted) {
@@ -761,11 +787,18 @@ function ReportEmergency() {
           {/* SUBMIT */}
           <button
             type="submit"
+            disabled={submitting}
             className="flex w-full items-center justify-center gap-3 rounded-2xl bg-red-600 px-6 py-4 text-lg font-black text-white shadow-lg shadow-red-200 transition hover:bg-red-700 hover:shadow-xl"
           >
             <Send size={21} />
-            Submit Emergency Report
+            {submitting ? "Submitting..." : "Submit Emergency Report"}
           </button>
+
+          {submissionError && (
+            <p className="text-center text-sm font-semibold text-red-600">
+              {submissionError}
+            </p>
+          )}
 
           <p className="pb-10 text-center text-xs text-slate-400">
             For immediate life-threatening emergencies, use SOS.
