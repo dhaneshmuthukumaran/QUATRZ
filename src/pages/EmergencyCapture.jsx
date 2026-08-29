@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createEmergencyReport } from "../services/emergencyService";
 
 const MAX_RECORDING_DURATION = 30; // seconds
 
@@ -77,7 +78,7 @@ export default function EmergencyCapture() {
 
   // ================= SAVE EMERGENCY =================
 
-  const saveEmergencyReport = (recordingBlob) => {
+  const saveEmergencyReport = async (recordingBlob) => {
     const reportId =
       "SOS-" + Math.floor(100000 + Math.random() * 900000);
 
@@ -101,6 +102,23 @@ export default function EmergencyCapture() {
         : null,
     };
 
+    try {
+      const response = await createEmergencyReport({
+        userId: "",
+        type: "SOS",
+        latitude: location?.latitude ?? null,
+        longitude: location?.longitude ?? null,
+        description: "Emergency SOS activated from CampusSafe",
+      });
+
+      report.backendReportId = response.reportId || null;
+    } catch (error) {
+      console.error("SOS backend request failed:", error);
+      setError(
+        "Emergency was saved locally, but the SOS could not be sent."
+      );
+    }
+
     const oldReports = JSON.parse(
       localStorage.getItem("campusSafeReports") || "[]"
     );
@@ -113,7 +131,9 @@ export default function EmergencyCapture() {
     console.log("Emergency report saved:", report);
 
     setStatus(
-      `🚨 Emergency sent successfully — Report ID: ${reportId}`
+      report.backendReportId
+        ? `🚨 Emergency sent successfully — Report ID: ${reportId}`
+        : `🚨 Emergency saved locally — Report ID: ${reportId}`
     );
 
     setRecordingStopped(true);

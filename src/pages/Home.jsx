@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
+import { createEmergencyReport } from "../services/emergencyService";
 
 function Home() {
   const navigate = useNavigate();
@@ -64,14 +65,31 @@ function Home() {
           createdAt: new Date().toISOString(),
         };
 
-        setLocation({
+        const currentLocation = {
           ...sosData,
           accuracy: position.coords.accuracy,
-        });
-        setLocationLoading(false);
-        setSosSuccess(true);
+        };
 
-        console.log("SOS Emergency:", sosData);
+        setLocation(currentLocation);
+        setLocationLoading(false);
+
+        createEmergencyReport({
+          userId: "",
+          type: "SOS",
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          description: "Emergency SOS activated from CampusSafe",
+        })
+          .then((response) => {
+            setSosSuccess(true);
+            console.log("SOS Emergency sent:", response);
+          })
+          .catch((error) => {
+            console.error("SOS backend request failed:", error);
+            setLocationError(
+              "Emergency location captured, but the SOS could not be sent. Please try again."
+            );
+          });
       },
 
       (error) => {
